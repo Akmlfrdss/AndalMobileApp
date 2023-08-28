@@ -54,8 +54,8 @@ class _ChildLoginPageState extends State<ChildLoginPage> {
 
     // Make an HTTP request to authenticate the user
     try {
-      var url = Uri.parse(
-          'http://10.0.2.2:3000/childlogin'); // Replace with your actual API endpoint
+      var url = Uri.parse('http://192.168.100.4:3000/childlogin');
+      // var url = Uri.parse('http://10.0.2.2:3000/childlogin'); // Replace with your actual API endpoint
       var body = jsonEncode({'username': username, 'password': password});
       var headers = {'Content-Type': 'application/json'};
 

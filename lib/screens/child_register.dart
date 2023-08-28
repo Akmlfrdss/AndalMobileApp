@@ -17,8 +17,8 @@ class _RegisterPageState extends State<ChildRegisterPage> {
   Future<void> _register() async {
     String username = _userController.text;
     String password = _passwordController.text;
-
-    Uri url = Uri.parse('http://10.0.2.2:3000/childregister');
+    var url = Uri.parse('http://192.168.100.4:3000/childlogin');
+    // Uri url = Uri.parse('http://10.0.2.2:3000/childregister');
   Map<String, String> headers = {'Content-Type': 'application/json'};
   String body = '{"username": "$username", "password": "$password"}';
 

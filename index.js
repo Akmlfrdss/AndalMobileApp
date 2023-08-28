@@ -4,6 +4,7 @@ const app = express();
 const Registration = require('./userModel');
 const childRegistration = require('./childModel');
 const ChildProfile = require('./childprofileModel');
+const ChildCoord = require('./childcoordModel');
 
 
 // Express route to handle registration
@@ -70,7 +71,7 @@ app.post('/childregister', async (req, res) => {
     // Buat pengguna baru dan simpan ke database
     const childregistration = await childRegistration.create({ username, password });
 
-    res.status(200).json(registration);
+    res.status(200).json(childRegistration);
   } catch (error) {
     console.log(error.message);
     res.status(500).json({ message: error.message });
@@ -200,13 +201,61 @@ app.delete('/childProfiles', async (req, res) => {
   }
 });
 
-app.post('/location', (req, res) => {
-  const { latitude, longitude } = req.body;
-  io.emit('locationUpdate', { latitude, longitude });
-  res.sendStatus(200);
-});
+app.post('/coordinates', async (req, res) => {
+  try {
+    const { username, latitude, longitude } = req.body
+    console.log('Received data:', username, latitude, longitude);
+    const newChildCoord = await ChildCoord.create({
+      username,
+      latitude,
+      longitude,
+    })
+
+    res.status(200).json(newChildCoord)
+  } catch (error) {
+    console.error('Error saving coordinate:', error)
+    res.status(500).json({ error: 'An error occurred' })
+  }
+})
+
+app.get('/coordinates', async (req, res) => {
+  try {
+    const coordinates = await ChildCoord.find({})
+    res.status(200).json(coordinates)
+  } catch (error) {
+    console.error('Error fetching coordinates:', error)
+    res.status(500).json({ error: 'An error occurred' })
+  }
+})
 
 
+// app.get('/save-location', async (req, res) =>{
+//   try{
+//     const newCoord = await ChildCoord.find({})
+//     res.status(200).json(newCoord)
+//   } catch (error) {
+//     console.log(error.message)
+//     res.status(500).json({ message: error.message})
+//   }
+// })
+
+// app.post('/save-location', async (req, res) => {
+//   try {
+//     const { username, latitude, longitude } = req.body;
+
+//     // Menggunakan model ChildCoord untuk menyimpan data lokasi
+//     const newCoord = await ChildCoord.create({
+//       username,
+//       latitude,
+//       longitude,
+//     });
+
+//     res.status(200).json(newCoord);
+//   } catch (error) {
+//     console.log(error.message);
+//     res.status(500).json({ message: error.message });
+//   }
+// });
 
 // Mongoose connection
 mongoose.connect('mongodb+srv://abdillahakmal:akmal4km4l@cluster1.l2o724k.mongodb.net/TrackinglocApp?retryWrites=true&w=majority')

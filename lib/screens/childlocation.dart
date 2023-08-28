@@ -7,13 +7,12 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'geofencemaps.dart';
 
-
 class ChildLocationMapPage extends StatefulWidget {
   final String childName;
   final double latitude;
   final double longitude;
 
-  const ChildLocationMapPage({  
+  const ChildLocationMapPage({
     Key? key,
     required this.childName,
     required this.latitude,
@@ -26,7 +25,6 @@ class ChildLocationMapPage extends StatefulWidget {
 }
 
 class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
-
   GoogleMapController? _mapController;
   LatLng _currentLocation = const LatLng(0, 0);
   LatLng? geofenceLocation;
@@ -63,8 +61,10 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
         return Theme(
           data: ThemeData.light().copyWith(
             primaryColor: Colors.blue, // Warna latar belakang header
-            colorScheme: ColorScheme.light(primary: Colors.blue), // Warna pilihan waktu
-            buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary), // Tombol OK
+            colorScheme:
+                ColorScheme.light(primary: Colors.blue), // Warna pilihan waktu
+            buttonTheme: ButtonThemeData(
+                textTheme: ButtonTextTheme.primary), // Tombol OK
           ),
           child: child!,
         );
@@ -79,8 +79,10 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
         return Theme(
           data: ThemeData.light().copyWith(
             primaryColor: Colors.blue, // Warna latar belakang header teks
-            colorScheme: ColorScheme.light(primary: Colors.blue), // Warna pilihan waktu
-            buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary), // Tombol OK
+            colorScheme:
+                ColorScheme.light(primary: Colors.blue), // Warna pilihan waktu
+            buttonTheme: ButtonThemeData(
+                textTheme: ButtonTextTheme.primary), // Tombol OK
           ),
           child: child!,
         );
@@ -114,7 +116,8 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
       });
     }
   }
-    int compareTimeOfDay(TimeOfDay a, TimeOfDay b) {
+
+  int compareTimeOfDay(TimeOfDay a, TimeOfDay b) {
     if (a.hour < b.hour) {
       return -1;
     } else if (a.hour > b.hour) {
@@ -126,20 +129,23 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
 
   bool isWithinGeofenceTime() {
     final currentTime = TimeOfDay.now();
-    final startTime = TimeOfDay(hour: geofenceStartTime.hour, minute: geofenceStartTime.minute);
-    final endTime = TimeOfDay(hour: geofenceEndTime.hour, minute: geofenceEndTime.minute);
+    final startTime = TimeOfDay(
+        hour: geofenceStartTime.hour, minute: geofenceStartTime.minute);
+    final endTime =
+        TimeOfDay(hour: geofenceEndTime.hour, minute: geofenceEndTime.minute);
 
     if (currentTime.hour > startTime.hour && currentTime.hour < endTime.hour) {
       return true;
-    } else if (currentTime.hour == startTime.hour && currentTime.minute >= startTime.minute) {
+    } else if (currentTime.hour == startTime.hour &&
+        currentTime.minute >= startTime.minute) {
       return true;
-    } else if (currentTime.hour == endTime.hour && currentTime.minute <= endTime.minute) {
+    } else if (currentTime.hour == endTime.hour &&
+        currentTime.minute <= endTime.minute) {
       return true;
     } else {
       return false;
     }
   }
-
 
   void _scheduleGeofenceDisplay() {
     final currentTime = DateTime.now();
@@ -165,7 +171,8 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
 
     if (timeUntilStart.isNegative) {
       // The start time has already passed for today, schedule for tomorrow
-      final scheduledDisplayTime = scheduledStartTime.add(const Duration(days: 1));
+      final scheduledDisplayTime =
+          scheduledStartTime.add(const Duration(days: 1));
       _scheduleGeofenceNotification(scheduledDisplayTime);
     } else {
       _scheduleGeofenceNotification(scheduledStartTime);
@@ -181,14 +188,14 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
   }
 
   void _cancelGeofenceNotification(DateTime scheduledCancelTime) {
-  // Mendapatkan ID notifikasi berdasarkan waktu yang akan dibatalkan
-  int notificationId = scheduledCancelTime.millisecondsSinceEpoch;
+    // Mendapatkan ID notifikasi berdasarkan waktu yang akan dibatalkan
+    int notificationId = scheduledCancelTime.millisecondsSinceEpoch;
 
-  // Membatalkan notifikasi dengan menggunakan package flutter_local_notifications
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-  flutterLocalNotificationsPlugin.cancel(notificationId);
-}
+    // Membatalkan notifikasi dengan menggunakan package flutter_local_notifications
+    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+        FlutterLocalNotificationsPlugin();
+    flutterLocalNotificationsPlugin.cancel(notificationId);
+  }
 
   void _scheduleGeofenceNotification(DateTime scheduledTime) {
     final Duration timeDifference = scheduledTime.difference(DateTime.now());
@@ -197,8 +204,6 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
       showGeofenceLocation();
     });
   }
-  
-
 
   void showGeofenceLocation() {
     // Display the geofence location on the map or perform any desired action
@@ -206,51 +211,52 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     print('Displaying geofence location: $geofenceLocation');
   }
 
-Future<void> _getAddressFromCoordinates() async {
-  try {
-    List<Placemark> placemarks = await placemarkFromCoordinates(
-      widget.latitude,
-      widget.longitude,
-    );
-    if (placemarks.isNotEmpty) {
-      Placemark placemark = placemarks[0];
-      String address = '${placemark.thoroughfare}, ${placemark.locality}';
-      setState(() {
-        _address = address;
-      });
-    }
-  // ignore: empty_catches
-  } catch (e) {
+  Future<void> _getAddressFromCoordinates() async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        widget.latitude,
+        widget.longitude,
+      );
+      if (placemarks.isNotEmpty) {
+        Placemark placemark = placemarks[0];
+        String address = '${placemark.thoroughfare}, ${placemark.locality}';
+        setState(() {
+          _address = address;
+        });
+      }
+      // ignore: empty_catches
+    } catch (e) {}
   }
-}
 
   double _geofenceRadius = 0.0;
-    void _setGeofence(LatLng geofenceCenter, double radius) {
-      setState(() {
-        if (isWithinGeofenceTime()) {
-          _circles = {
-            Circle(
-              circleId: const CircleId('geofence_circle'),
-              center: geofenceCenter,
-              radius: radius,
-              fillColor: Colors.blue.withOpacity(0.2),
-              strokeColor: Colors.blue,
-              strokeWidth: 2,
-            ),
-          };
-        } else {
-          _circles = {}; // Jika tidak ada jadwal, lingkaran geofence tidak ditampilkan
-        }
-        geofenceLocation = geofenceCenter;
-        _geofenceRadius = radius;
-      });
-    }
+  void _setGeofence(LatLng geofenceCenter, double radius) {
+    setState(() {
+      if (isWithinGeofenceTime()) {
+        _circles = {
+          Circle(
+            circleId: const CircleId('geofence_circle'),
+            center: geofenceCenter,
+            radius: radius,
+            fillColor: Colors.blue.withOpacity(0.2),
+            strokeColor: Colors.blue,
+            strokeWidth: 2,
+          ),
+        };
+      } else {
+        _circles =
+            {}; // Jika tidak ada jadwal, lingkaran geofence tidak ditampilkan
+      }
+      geofenceLocation = geofenceCenter;
+      _geofenceRadius = radius;
+    });
+  }
 
   void _checkGeofence() {
     if (geofenceLocation != null) {
       final distance = _calculateDistance(_currentLocation, geofenceLocation!);
       final radius = _geofenceRadius;
-      bool isInside = distance <= radius && isWithinGeofenceTime(); // Perbarui kondisi
+      bool isInside =
+          distance <= radius && isWithinGeofenceTime(); // Perbarui kondisi
 
       setState(() {
         _isInsideGeofence = isInside;
@@ -279,21 +285,24 @@ Future<void> _getAddressFromCoordinates() async {
   final StreamController<bool> _geofenceStreamController =
       StreamController<bool>.broadcast();
 
-    void _updateGeofenceStatus() {
-      _checkGeofence();
-      _geofenceStreamController.add(_isInsideGeofence);
-    }
+  void _updateGeofenceStatus() {
+    _checkGeofence();
+    _geofenceStreamController.add(_isInsideGeofence);
+  }
+
   Future<void> _setMapStyle() async {
-    String mapStyle = await rootBundle.loadString('assets/map_style.json'); // Memuat gaya peta dari file JSON
+    String mapStyle = await rootBundle
+        .loadString('assets/map_style.json'); // Memuat gaya peta dari file JSON
     _mapController?.setMapStyle(mapStyle);
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Peta Lokasi Anak'),
         centerTitle: true,
-        titleTextStyle: const TextStyle(fontFamily: 'LatoFont',fontSize: 25),
+        titleTextStyle: const TextStyle(fontFamily: 'LatoFont', fontSize: 25),
         backgroundColor: const Color(0xFF5863F8),
       ),
       body: Stack(
@@ -328,9 +337,10 @@ Future<void> _getAddressFromCoordinates() async {
             alignment: Alignment.bottomCenter,
             child: Container(
               height: 280,
-              width: 500, 
+              width: 500,
               decoration: BoxDecoration(
-                color: const Color.fromARGB(129, 73, 73, 73), // Mengatur transparansi di sini
+                color: const Color.fromARGB(
+                    129, 73, 73, 73), // Mengatur transparansi di sini
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(30.0),
                   topRight: Radius.circular(30.0),
@@ -348,7 +358,8 @@ Future<void> _getAddressFromCoordinates() async {
                   width: 0.5,
                 ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 50.0, vertical: 40.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 50.0, vertical: 40.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -356,19 +367,17 @@ Future<void> _getAddressFromCoordinates() async {
                   Text(
                     'Nama Anak : ${widget.childName}',
                     style: const TextStyle(
-                      fontSize: 20.0,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white
-                    ),
+                        fontSize: 20.0,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                   const SizedBox(height: 5.0),
                   Text(
                     'Lokasi : $_address',
                     style: const TextStyle(
-                      fontSize: 16.0,
-                      color: Color.fromARGB(255, 165, 164, 164),
-                      fontWeight: FontWeight.w400
-                    ),
+                        fontSize: 16.0,
+                        color: Color.fromARGB(255, 165, 164, 164),
+                        fontWeight: FontWeight.w400),
                   ),
                   const SizedBox(height: 16.0),
                   Text(
@@ -382,12 +391,15 @@ Future<void> _getAddressFromCoordinates() async {
                   ),
                   const SizedBox(height: 16.0),
                   StreamBuilder<bool>(
-                    stream: _geofenceStreamController.stream, 
+                    stream: _geofenceStreamController.stream,
                     initialData: false,
                     builder: (context, snapshot) {
                       bool isInside = snapshot.data ?? false;
-                      String geofenceStatus = isInside ? 'Di Dalam Area.' : 'Di Luar Area. ';
-                      Color textColor = isInside ? Colors.green : const Color.fromARGB(255, 255, 36, 20);
+                      String geofenceStatus =
+                          isInside ? 'Di Dalam Area.' : 'Di Luar Area. ';
+                      Color textColor = isInside
+                          ? Colors.green
+                          : const Color.fromARGB(255, 255, 36, 20);
                       // ignore: unrelated_type_equality_checks
                       if (!isInside && !isWithinGeofenceTime()) {
                         geofenceStatus = 'Tidak Ada Jadwal.';
@@ -419,16 +431,19 @@ Future<void> _getAddressFromCoordinates() async {
                   ElevatedButton(
                     onPressed: _selectLocation,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:const Color(0xFF5863F8),
+                      backgroundColor: const Color(0xFF5863F8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15.0),
                       ),
-                      shadowColor: const Color.fromARGB(255, 0, 0, 0).withOpacity(1), // Menambahkan warna bayangan
+                      shadowColor: const Color.fromARGB(255, 0, 0, 0)
+                          .withOpacity(1), // Menambahkan warna bayangan
                       elevation: 6, // Menambahkan tinggi bayangan
                     ),
                     child: const Text(
                       ('Pilih Koordinat Geofence'),
-                      style: TextStyle(color: Color.fromARGB(255, 255, 255, 255),fontSize: 16),
+                      style: TextStyle(
+                          color: Color.fromARGB(255, 255, 255, 255),
+                          fontSize: 16),
                     ),
                   ),
                 ],
@@ -440,4 +455,3 @@ Future<void> _getAddressFromCoordinates() async {
     );
   }
 }
-
