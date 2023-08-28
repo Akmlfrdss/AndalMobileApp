@@ -59,9 +59,13 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     final TimeOfDay? selectedStartTime = await showTimePicker(
       context: context,
       initialTime: geofenceStartTime,
-      builder: (BuildContext context, Widget? child) { 
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true), // Mengatur format waktu menjadi 24 jam
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            primaryColor: Colors.blue, // Warna latar belakang header
+            colorScheme: ColorScheme.light(primary: Colors.blue), // Warna pilihan waktu
+            buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary), // Tombol OK
+          ),
           child: child!,
         );
       },
@@ -72,8 +76,12 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
       context: context,
       initialTime: geofenceEndTime,
       builder: (BuildContext context, Widget? child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true), // Mengatur format waktu menjadi 24 jam
+        return Theme(
+          data: ThemeData.light().copyWith(
+            primaryColor: Colors.blue, // Warna latar belakang header teks
+            colorScheme: ColorScheme.light(primary: Colors.blue), // Warna pilihan waktu
+            buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary), // Tombol OK
+          ),
           child: child!,
         );
       },
