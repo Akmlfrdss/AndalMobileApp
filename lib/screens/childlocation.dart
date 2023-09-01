@@ -1,11 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'geofencemaps.dart';
+import 'package:http/http.dart' as http;
 
 class ChildLocationMapPage extends StatefulWidget {
   final String childName;
@@ -32,24 +36,64 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
   Set<Circle> _circles = {};
   TimeOfDay geofenceStartTime = const TimeOfDay(hour: 0, minute: 0);
   TimeOfDay geofenceEndTime = const TimeOfDay(hour: 0, minute: 0);
+  bool _isLocationServiceEnabled = false;
 
   @override
   void dispose() {
     _mapController?.dispose();
     _geofenceStreamController.close();
+    _autoUpdateTimer!.cancel();
     super.dispose();
   }
 
-  @override
+  Timer? _autoUpdateTimer;
   @override
   void initState() {
     super.initState();
-    _currentLocation = LatLng(widget.latitude, widget.longitude);
     _getAddressFromCoordinates();
     _updateGeofenceStatus();
 
     if (isWithinGeofenceTime()) {
       _scheduleGeofenceDisplay();
+    }
+
+    _checkLocationPermissionStatus();
+
+    // Mulai timer otomatis untuk mengupdate lokasi setiap 5 detik
+    _autoUpdateTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      print('Auto Update Timer Executed');
+      if (_isLocationServiceEnabled) {
+        print('Updating location');
+        getDataFromAPI();
+        _getAddressFromCoordinates();
+      }
+    });
+  }
+
+  Future<void> getDataFromAPI() async {
+    final url = Uri.parse(
+        'https://childtrackr-backend-production.up.railway.app/child/findCoordinates');
+    final response = await http.get(url);
+
+    print('Response status code: ${response.statusCode}');
+    print('Response body: ${response.body}');
+    print('nama: ${widget.childName}');
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      final profile = data.firstWhere(
+          (profile) => profile['username'] == widget.childName,
+          orElse: () => null);
+
+      if (profile != null) {
+        double childlatitude = profile['latitude'];
+        double childlongitude = profile['longitude'];
+        setState(() {
+          _currentLocation = LatLng(childlatitude, childlongitude);
+        });
+        print('Updated current location: $_currentLocation');
+        _goToCurrentLocation();
+      }
     }
   }
 
@@ -61,9 +105,9 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
         return Theme(
           data: ThemeData.light().copyWith(
             primaryColor: Colors.blue, // Warna latar belakang header
-            colorScheme:
-                ColorScheme.light(primary: Colors.blue), // Warna pilihan waktu
-            buttonTheme: ButtonThemeData(
+            colorScheme: const ColorScheme.light(
+                primary: Colors.blue), // Warna pilihan waktu
+            buttonTheme: const ButtonThemeData(
                 textTheme: ButtonTextTheme.primary), // Tombol OK
           ),
           child: child!,
@@ -71,7 +115,11 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
       },
     );
 
-    // ignore: use_build_context_synchronously
+    if (selectedStartTime == null) {
+      // User pressed Cancel, so return early
+      return;
+    }
+
     final TimeOfDay? selectedEndTime = await showTimePicker(
       context: context,
       initialTime: geofenceEndTime,
@@ -79,9 +127,9 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
         return Theme(
           data: ThemeData.light().copyWith(
             primaryColor: Colors.blue, // Warna latar belakang header teks
-            colorScheme:
-                ColorScheme.light(primary: Colors.blue), // Warna pilihan waktu
-            buttonTheme: ButtonThemeData(
+            colorScheme: const ColorScheme.light(
+                primary: Colors.blue), // Warna pilihan waktu
+            buttonTheme: const ButtonThemeData(
                 textTheme: ButtonTextTheme.primary), // Tombol OK
           ),
           child: child!,
@@ -89,15 +137,17 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
       },
     );
 
-    if (selectedStartTime != null && selectedEndTime != null) {
-      setState(() {
-        geofenceStartTime = selectedStartTime;
-        geofenceEndTime = selectedEndTime;
-        _updateGeofenceStatus();
-      });
+    if (selectedEndTime == null) {
+      // User pressed Cancel, so return early
+      return;
     }
 
-    // ignore: use_build_context_synchronously
+    setState(() {
+      geofenceStartTime = selectedStartTime;
+      geofenceEndTime = selectedEndTime;
+      _updateGeofenceStatus();
+    });
+
     final LatLng? selectedLocation = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -214,8 +264,8 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
   Future<void> _getAddressFromCoordinates() async {
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(
-        widget.latitude,
-        widget.longitude,
+        _currentLocation.latitude,
+        _currentLocation.longitude,
       );
       if (placemarks.isNotEmpty) {
         Placemark placemark = placemarks[0];
@@ -296,6 +346,26 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     _mapController?.setMapStyle(mapStyle);
   }
 
+  void _goToCurrentLocation() {
+    if (_mapController != null) {
+      _mapController!.animateCamera(CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: _currentLocation,
+          zoom: 16.0,
+        ),
+      ));
+    }
+  }
+
+  Future<void> _checkLocationPermissionStatus() async {
+    var status = await Permission.locationWhenInUse.status;
+    if (status.isGranted) {
+      setState(() {
+        _isLocationServiceEnabled = true;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -373,7 +443,7 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
                   ),
                   const SizedBox(height: 5.0),
                   Text(
-                    'Lokasi : $_address',
+                    'Lokasi : $_address (${_currentLocation.latitude} ${_currentLocation.longitude})',
                     style: const TextStyle(
                         fontSize: 16.0,
                         color: Color.fromARGB(255, 165, 164, 164),
@@ -381,7 +451,7 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
                   ),
                   const SizedBox(height: 16.0),
                   Text(
-                    'sekolah : ${geofenceStartTime.format(context)} - ${geofenceEndTime.format(context)}',
+                    'Jadwal : ${geofenceStartTime.format(context)} - ${geofenceEndTime.format(context)}',
                     style: const TextStyle(
                       fontSize: 14.0,
                       fontStyle: FontStyle.italic,

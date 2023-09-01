@@ -20,7 +20,7 @@ Future<void> _register() async {
 
   // Make a POST request to the registration endpoint
   // Uri url = Uri.parse('http://10.0.2.2:3000/register');
-  Uri url = Uri.parse('http://10.0.2.2:3000/register');
+  Uri url = Uri.parse('https://childtrackr-backend-production.up.railway.app/user/register');
   Map<String, String> headers = {'Content-Type': 'application/json'};
   String body = '{"username": "$username", "password": "$password"}';
 

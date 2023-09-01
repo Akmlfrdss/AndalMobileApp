@@ -217,7 +217,24 @@ app.post('/coordinates', async (req, res) => {
     res.status(500).json({ error: 'An error occurred' })
   }
 })
+app.post('/child/findcoordinates', async (req, res) => {
+  const { username } = req.body;
 
+  try {
+    const child = await coordinates.findOne({ username });
+    if (child) {
+      res.json({
+        username: child.username,
+        latitude: child.latitude,
+        longitude: child.longitude,
+      });
+    } else {
+      res.status(404).json({ error: 'Data koordinat tidak ditemukan.' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Terjadi kesalahan pada server.' });
+  }
+});
 app.get('/coordinates', async (req, res) => {
   try {
     const coordinates = await ChildCoord.find({})

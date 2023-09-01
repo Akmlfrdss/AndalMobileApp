@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'childlocation.dart';
-import 'maps.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'childprofiles.dart';
 import 'package:http/http.dart' as http;
+import 'parents_login.dart';
+import 'package:tracking_loc2/main.dart';
 
 class ParentHomePage extends StatefulWidget {
   final String username;
@@ -25,6 +26,14 @@ class _ParentHomePageState extends State<ParentHomePage> {
     super.initState();
     _getChildProfiles();
   }
+
+  void _addChildProfile(ChildProfile newProfile) {
+  setState(() {
+    childProfiles.add(newProfile);
+    });
+  }
+
+  
 
   Future<void> _getChildProfiles() async {
     try {
@@ -55,8 +64,11 @@ class _ParentHomePageState extends State<ParentHomePage> {
   
 
   Future<List<ChildProfile>> _fetchChildProfiles() async {
-    final url = Uri.parse('http://10.0.2.2:3000/childProfiles');
+    final url = Uri.parse('https://childtrackr-backend-production.up.railway.app/user/userProfiles');
     final response = await http.get(url);
+
+    print('Response status code: ${response.statusCode}');
+    print('Response body: ${response.body}'); // Print the response body
 
     if (response.statusCode == 200) {
       final List<dynamic> responseData = jsonDecode(response.body);
@@ -64,39 +76,61 @@ class _ParentHomePageState extends State<ParentHomePage> {
           .map((data) => ChildProfile(
                 username: data['username'],
                 name: data['name'],
-                latitude: data['latitude'],
-                longitude: data['longitude'],
+                latitude: double.parse(data['latitude'].toString()),  // Ubah tipe data ke double
+                longitude: double.parse(data['longitude'].toString()),
               ))
           .toList();
-      _getChildProfiles();
       return childProfiles; 
     } else {
-      throw Exception('Gagal mengambil data Child Profile.');
+      throw Exception('');
     }
   }
+    void _goToLandingPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            ParentLoginPage(), // Replace with the appropriate registration page
+      ),
+    );
+  }
+
+void _logOut() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.remove('userType');
+  prefs.remove('username');
+
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (context) => LandingPage(), // Ganti dengan halaman login yang sesuai
+    ),
+  );
+}
   
-  @override
-  Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        if (_currentIndex != 0) {
-          setState(() {
-            _currentIndex = 0;
-          });
-          return false;
-        }
-        return true;
-      },
-      child: Scaffold(
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF5863F8), Color(0xFF5FBFF9)],
-              begin: Alignment.centerRight,
-              end: Alignment.bottomCenter,
+@override
+Widget build(BuildContext context) {
+  return WillPopScope(
+    onWillPop: () async {
+      if (_currentIndex != 0) {
+        setState(() {
+          _currentIndex = 0;
+        });
+        return false;
+      }
+      return true;
+    },
+    child: Scaffold(
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF5863F8), Color(0xFF5FBFF9)],
+                begin: Alignment.centerRight,
+                end: Alignment.bottomCenter,
+              ),
             ),
-          ),
-          child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Center(
               child: Column(
@@ -136,7 +170,7 @@ class _ParentHomePageState extends State<ParentHomePage> {
                                 ),
                               );
                             },
-                         );
+                          );
                         } else {
                           return const SizedBox();
                         }
@@ -147,69 +181,105 @@ class _ParentHomePageState extends State<ParentHomePage> {
               ),
             ),
           ),
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-            if (index == 1) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => HistoryPage(username: widget.username),
-                ),
-              );
-            } else if (index == 2) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ProfilePage(username: widget.username),
-                ),
-              );
-            }
-          },
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(
+                icon: Icon(Icons.logout_outlined),
+                onPressed: _logOut,
+              ),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.history),
-              label: 'History',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _addProfile,
-          child: const Icon(Icons.add),
-        ),
+          ),
+        ],
       ),
-    );
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HistoryPage(username: widget.username),
+              ),
+            );
+          } else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProfilePage(username: widget.username),
+              ),
+            );
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'History',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addProfile,
+        child: const Icon(Icons.add),
+      ),
+    ),
+  );
+}
+
+  
+Future<Map<String, dynamic>> _getCoordinatesByUsername(String username) async {
+  final url = Uri.parse('https://childtrackr-backend-production.up.railway.app/child/findCoordinates');
+  final headers = {'Content-Type': 'application/json'};
+  final body = jsonEncode({'username': username});
+
+  print('Sending request to: $url with body: $body');
+
+  final response = await http.post(url, body: body, headers: headers);
+
+  print('Response status code: ${response.statusCode}');
+  print('Response body: ${response.body}');
+
+  if (response.statusCode == 200) {
+    final responseData = jsonDecode(response.body);
+    if (responseData['latitude'] != null && responseData['longitude'] != null) {
+      return {
+        'childUsername': responseData['username'],
+        'latitude': responseData['latitude'],
+        'longitude': responseData['longitude'],
+      };
+    } else {
+      throw Exception('Data koordinat tidak ditemukan.');
+    }
+  } else {
+    throw Exception('Gagal mengambil data koordinat.');
   }
+}
 
-  void _addProfile() async {
-    final LatLng? selectedLatLng = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const MapPage(),
-      ),
-    );
+void _addProfile() async {
+  String childUsername = '';
+  double latitude = 0.0;
+  double longitude = 0.0;
 
-    if (selectedLatLng != null) {
-      // ignore: use_build_context_synchronously
-      showDialog(
-        context: context,
-        builder: (context) {
-          String name = '';
-          double latitude = selectedLatLng.latitude;
-          double longitude = selectedLatLng.longitude;
-
+  showDialog(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
           return AlertDialog(
             title: const Text('Tambah Profil Anak'),
             content: Column(
@@ -217,24 +287,40 @@ class _ParentHomePageState extends State<ParentHomePage> {
               children: [
                 TextField(
                   onChanged: (value) {
-                    name = value;
+                    childUsername = value;
                   },
                   decoration: const InputDecoration(
-                    labelText: 'Nama Anak',
+                    labelText: 'Username Anak',
                   ),
                 ),
-                const SizedBox(height: 16.0),
-                Text(
-                  'Koordinat Terpilih: ${latitude.toStringAsFixed(6)}, ${longitude.toStringAsFixed(6)}',
+                ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      final coordinates = await _getCoordinatesByUsername(childUsername);
+                      setState(() {
+                        latitude = coordinates['latitude'] ?? 0.0;
+                        longitude = coordinates['longitude'] ?? 0.0;
+                      });
+                      
+                    } catch (error) {
+                      // Tangani error jika ada masalah dalam permintaan http
+                      print('Error: $error');
+                    }
+                  },
+                  child: const Text('Dapatkan Info'),
                 ),
+                const SizedBox(height: 10.0),
+                Text('Username: $childUsername'),
+                Text('Latitude: ${latitude.toStringAsFixed(6)}'), // Tampilkan dengan format yang diinginkan
+                Text('Longitude: ${longitude.toStringAsFixed(6)}'), // Tampilkan dengan format yang diinginkan
               ],
             ),
             actions: [
               TextButton(
-                onPressed: () {
+                onPressed: () async {
                   final newProfile = ChildProfile(
                     username: widget.username,
-                    name: name,
+                    name: childUsername,
                     latitude: latitude,
                     longitude: longitude,
                   );
@@ -253,15 +339,17 @@ class _ParentHomePageState extends State<ParentHomePage> {
           );
         },
       );
-    }
-  }
+    },
+  );
+}
+
 
   Future<void> _saveChildProfile(ChildProfile newProfile) async {
     String username = newProfile.username;
     String name = newProfile.name;
     double latitude = newProfile.latitude;
     double longitude = newProfile.longitude;
-    Uri url = Uri.parse('http://10.0.2.2:3000/addProfile');
+    Uri url = Uri.parse('https://childtrackr-backend-production.up.railway.app/user/addProfile');
     Map<String, String> headers = {'Content-Type': 'application/json'};
     var body = ({
       'username': username,

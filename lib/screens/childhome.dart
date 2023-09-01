@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geocoding/geocoding.dart';
@@ -8,6 +7,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tracking_loc2/main.dart';
 
 class ChildHomePage extends StatefulWidget {
   final String username;
@@ -47,11 +48,37 @@ class _ChildHomePageState extends State<ChildHomePage> {
     );
   }
 
+  Timer? _updateTimer, _autoUpdateTimer;
   @override
   void initState() {
     super.initState();
     _checkLocationPermissionStatus();
     _getCurrentLocation();
+    // Mulai timer dengan interval 0,5 detik
+    _updateTimer = Timer.periodic(Duration(seconds: 10), (timer) {
+      print('Timer Executed');
+      if (_isLocationServiceEnabled) {
+        print('Sending data to backend');
+        _sendDataToBackend(
+            _currentLocation.latitude, _currentLocation.longitude);
+      }
+    });
+
+    // Mulai timer otomatis untuk mengupdate lokasi setiap 5 detik
+    _autoUpdateTimer = Timer.periodic(Duration(seconds: 10), (timer) {
+      print('Auto Update Timer Executed');
+      if (_isLocationServiceEnabled) {
+        print('Updating location');
+        _goToCurrentLocation();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _updateTimer!.cancel();
+    _autoUpdateTimer!.cancel();
+    super.dispose();
   }
 
   Future<void> _checkLocationPermissionStatus() async {
@@ -119,28 +146,44 @@ class _ChildHomePageState extends State<ChildHomePage> {
       ));
     }
   }
-  Future<void> _sendDataToBackend(double latitude, double longitude) async {
-  try{
-  final response = await http.post(
-    Uri.parse('http://192.168.100.4:3000/coordinates'), // Ganti dengan URL backend Anda
-    headers: {'Content-Type': 'application/json'},
-    body: jsonEncode({
-      'username': widget.username, 
-      'latitude': latitude, 
-      'longitude': longitude
-      }),
-  );
 
-  if (response.statusCode == 200) {
-    print('Coordinate sent successfully');
-  } else {
-    print('Failed to send coordinate');
-  }
-  }
-   catch (e) {
+  Future<void> _sendDataToBackend(double latitude, double longitude) async {
+    try {
+      final response = await http.put(
+        Uri.parse(
+            'https://childtrackr-backend-production.up.railway.app/child/findCoordinates/${widget.username}'), // Ganti dengan URL backend Anda
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'username': widget.username,
+          'latitude': latitude,
+          'longitude': longitude
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('Coordinate sent successfully');
+      } else {
+        print('Failed to send coordinate');
+      }
+    } catch (e) {
       print('Error sending coordinate: $e');
+    }
   }
-}
+
+
+ void _logOut() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.remove('userType');
+  prefs.remove('username');
+
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (context) => LandingPage(), // Ganti dengan halaman login yang sesuai
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -178,13 +221,26 @@ class _ChildHomePageState extends State<ChildHomePage> {
             right: 16.0,
             child: FloatingActionButton(
               onPressed: _isLocationServiceEnabled
-                  ?() {
+                  ? () {
                       _goToCurrentLocation();
-                      _sendDataToBackend(
-                      _currentLocation.latitude, _currentLocation.longitude);
+                      _sendDataToBackend(_currentLocation.latitude,
+                          _currentLocation.longitude);
                     }
                   : null,
               child: Icon(Icons.my_location),
+            ),
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(
+                icon: Icon(Icons.logout_outlined),
+                onPressed: _logOut,
+              ),
             ),
           ),
         ],
@@ -192,4 +248,3 @@ class _ChildHomePageState extends State<ChildHomePage> {
     );
   }
 }
-

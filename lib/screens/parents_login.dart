@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tracking_loc2/screens/parents_register.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'parentshome.dart';
-
 
 class ParentLoginPage extends StatefulWidget {
   const ParentLoginPage({Key? key}) : super(key: key);
@@ -54,7 +54,7 @@ class _ParentLoginPageState extends State<ParentLoginPage> {
 
     // Make an HTTP request to authenticate the user
     try {
-      var url = Uri.parse('http://10.0.2.2:3000/login'); // Replace with your actual API endpoint
+      var url = Uri.parse('https://childtrackr-backend-production.up.railway.app/user/login'); // Replace with your actual API endpoint
       var body = jsonEncode({'username': username, 'password': password});
       var headers = {'Content-Type': 'application/json'};
 
@@ -66,10 +66,13 @@ class _ParentLoginPageState extends State<ParentLoginPage> {
         bool isAuthenticated = data['isAuthenticated'];
 
         if (isAuthenticated) {
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          prefs.setString('userType', 'parent');
+          prefs.setString('username', username);
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => ParentHomePage(username: username),  // Pass the username to ParentHomePage
+              builder: (context) => ParentHomePage(username: username), // Pass the username to ParentHomePage
             ),
           );
         } else {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tracking_loc2/screens/child_register.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -54,7 +55,7 @@ class _ChildLoginPageState extends State<ChildLoginPage> {
 
     // Make an HTTP request to authenticate the user
     try {
-      var url = Uri.parse('http://192.168.100.4:3000/childlogin');
+      var url = Uri.parse('https://childtrackr-backend-production.up.railway.app/child/childlogin');
       // var url = Uri.parse('http://10.0.2.2:3000/childlogin'); // Replace with your actual API endpoint
       var body = jsonEncode({'username': username, 'password': password});
       var headers = {'Content-Type': 'application/json'};
@@ -67,6 +68,9 @@ class _ChildLoginPageState extends State<ChildLoginPage> {
         bool isAuthenticated = data['isAuthenticated'];
 
         if (isAuthenticated) {
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          prefs.setString('userType', 'child');
+          prefs.setString('childUsername', username);
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
