@@ -67,6 +67,12 @@ flutter:
   - family: LatoFont
     fonts:
     - asset: fonts/Lato-BlackItalic.ttf
+  - family: Goldplay
+    fonts:
+    - asset: fonts/Goldplay-black.otf
+  - family: Poppins
+    fonts:
+    - asset: fonts/Poppins-Regular.ttf
   assets:
   - assets/map_style.json
 

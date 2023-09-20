@@ -71,6 +71,26 @@ Future<void> _register() async {
         },
       );
     }
+     else {
+      // ignore: use_build_context_synchronously
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: const Text('Pastikan password minimal 8 karakter yang mengandung kapital dan angka'),
+            actions: [
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
   } catch (error) {
     print('Error during registration: $error');
     showDialog(

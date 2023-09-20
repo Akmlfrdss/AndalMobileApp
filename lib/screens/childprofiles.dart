@@ -29,7 +29,7 @@ class ChildProfileButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(
-          horizontal: 30.0, vertical: 14.0), // Menambahkan jarak kiri dan kanan
+          horizontal: 40.0, vertical: 20.0), // Menambahkan jarak kiri dan kanan
       child: SizedBox(
         width: 50.0,
         height: 120.0,
@@ -38,11 +38,11 @@ class ChildProfileButton extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color.fromARGB(255, 253, 252, 252),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.0),
+              borderRadius: BorderRadius.circular(10.0),
             ),
             shadowColor:
-                Colors.black.withOpacity(0.8), // Menambahkan warna bayangan
-            elevation: 4, // Menambahkan tinggi bayangan
+                Colors.black.withOpacity(1), // Menambahkan warna bayangan
+            elevation: 3, // Menambahkan tinggi bayangan
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -53,7 +53,7 @@ class ChildProfileButton extends StatelessWidget {
                 childProfile.name,
                 style: const TextStyle(
                     fontSize: 20,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w500,
                     color: Color(0xFF5863F8)),
               ),
             ],

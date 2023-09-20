@@ -54,8 +54,8 @@ class _ChildHomePageState extends State<ChildHomePage> {
     super.initState();
     _checkLocationPermissionStatus();
     _getCurrentLocation();
-    // Mulai timer dengan interval 0,5 detik
-    _updateTimer = Timer.periodic(Duration(seconds: 10), (timer) {
+    // Mulai timer dengan interval 1 detik
+    _updateTimer = Timer.periodic(Duration(milliseconds: 1), (timer) {
       print('Timer Executed');
       if (_isLocationServiceEnabled) {
         print('Sending data to backend');
@@ -64,12 +64,13 @@ class _ChildHomePageState extends State<ChildHomePage> {
       }
     });
 
-    // Mulai timer otomatis untuk mengupdate lokasi setiap 5 detik
-    _autoUpdateTimer = Timer.periodic(Duration(seconds: 10), (timer) {
+    // Mulai timer otomatis untuk mengupdate lokasi setiap 1 detik
+    _autoUpdateTimer = Timer.periodic(Duration(seconds: 1), (timer) {
       print('Auto Update Timer Executed');
       if (_isLocationServiceEnabled) {
         print('Updating location');
         _goToCurrentLocation();
+        _getCurrentLocation();
       }
     });
   }
@@ -122,7 +123,7 @@ class _ChildHomePageState extends State<ChildHomePage> {
   Future<void> _getCurrentLocation() async {
     try {
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        desiredAccuracy: LocationAccuracy.best,
       );
       setState(() {
         _currentLocation = LatLng(position.latitude, position.longitude);
@@ -170,16 +171,16 @@ class _ChildHomePageState extends State<ChildHomePage> {
     }
   }
 
+  void _logOut() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.remove('userType');
+    prefs.remove('username');
 
- void _logOut() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  prefs.remove('userType');
-  prefs.remove('username');
-
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(
-      builder: (context) => LandingPage(), // Ganti dengan halaman login yang sesuai
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            LandingPage(), // Ganti dengan halaman login yang sesuai
       ),
     );
   }

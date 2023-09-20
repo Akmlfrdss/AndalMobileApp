@@ -1,5 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -10,6 +10,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'geofencemaps.dart';
 import 'package:http/http.dart' as http;
+import 'api_utils.dart';
 
 class ChildLocationMapPage extends StatefulWidget {
   final String childName;
@@ -58,43 +59,29 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     }
 
     _checkLocationPermissionStatus();
+    _getDataFromDatabase();
 
     // Mulai timer otomatis untuk mengupdate lokasi setiap 5 detik
-    _autoUpdateTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    _autoUpdateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       print('Auto Update Timer Executed');
       if (_isLocationServiceEnabled) {
         print('Updating location');
-        getDataFromAPI();
+        ApiUtils.getDataFromAPI(widget.childName, (location) {
+          setState(() {
+            _currentLocation = location;
+          });
+          print('Updated current location: $_currentLocation');
+          _goToCurrentLocation();
+        });
         _getAddressFromCoordinates();
+        print('Updated geofence data: $geofenceLocation, $_geofenceRadius');
+        _setGeofence(geofenceLocation!, _geofenceRadius);
+        _checkGeofence();
+        isWithinGeofenceTime();
+        _updateGeofenceStatus();
+        _getDataFromDatabase();
       }
     });
-  }
-
-  Future<void> getDataFromAPI() async {
-    final url = Uri.parse(
-        'https://childtrackr-backend-production.up.railway.app/child/findCoordinates');
-    final response = await http.get(url);
-
-    print('Response status code: ${response.statusCode}');
-    print('Response body: ${response.body}');
-    print('nama: ${widget.childName}');
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      final profile = data.firstWhere(
-          (profile) => profile['username'] == widget.childName,
-          orElse: () => null);
-
-      if (profile != null) {
-        double childlatitude = profile['latitude'];
-        double childlongitude = profile['longitude'];
-        setState(() {
-          _currentLocation = LatLng(childlatitude, childlongitude);
-        });
-        print('Updated current location: $_currentLocation');
-        _goToCurrentLocation();
-      }
-    }
   }
 
   Future<void> _selectLocation() async {
@@ -155,15 +142,69 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
       ),
     );
 
+    print('Selected Location: $selectedLocation');
+    print('Geofence StartTime: $geofenceStartTime');
+    print('Geofence EndTime: $geofenceEndTime');
+
     if (selectedLocation != null) {
       setState(() {
         geofenceLocation = selectedLocation;
-        _setGeofence(selectedLocation, 100.0);
+        _setGeofence(selectedLocation, _geofenceRadius);
         _updateGeofenceStatus();
         if (isWithinGeofenceTime()) {
           _scheduleGeofenceDisplay();
         }
       });
+
+      // Simpan data geofence ke database di sini
+      ApiUtils.saveGeofenceDataToDatabase(
+        Context: context,
+        Datausername: widget.childName,
+        Datalatitude: selectedLocation.latitude,
+        Datalongitude: selectedLocation.longitude,
+        Dataradius: _geofenceRadius,
+        DatastartTime: geofenceStartTime,
+        DataendTime: geofenceEndTime,
+      );
+    }
+  }
+
+  Future<void> _getDataFromDatabase() async {
+    final url = Uri.parse(
+        'https://childtrackr-backend-production.up.railway.app/geofence/data'); // Ganti URL_ANDA sesuai dengan URL endpoint data geofence dari database Anda
+    final response = await http.get(url);
+
+    // print('Response status code: ${response.statusCode}');
+    // print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      final geofenceData = data.firstWhere(
+          (geofencedata) => geofencedata['username'] == widget.childName,
+          orElse: () => null);
+
+      if (geofenceData != null) {
+        double geofenceLatitude = geofenceData['latitude'];
+        double geofenceLongitude = geofenceData['longitude'];
+        String startTimeStr = geofenceData['start_time'];
+        String endTimeStr = geofenceData['end_time'];
+
+        TimeOfDay startTime = TimeOfDay(
+          hour: int.parse(startTimeStr.split(':')[0]),
+          minute: int.parse(startTimeStr.split(':')[1]),
+        );
+
+        TimeOfDay endTime = TimeOfDay(
+          hour: int.parse(endTimeStr.split(':')[0]),
+          minute: int.parse(endTimeStr.split(':')[1]),
+        );
+        // Set geofence berdasarkan data yang diambil dari database
+        setState(() {
+          geofenceLocation = LatLng(geofenceLatitude, geofenceLongitude);
+          geofenceStartTime = startTime;
+          geofenceEndTime = endTime;
+        });
+      }
     }
   }
 
@@ -278,7 +319,7 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     } catch (e) {}
   }
 
-  double _geofenceRadius = 0.0;
+  double _geofenceRadius = 100.0;
   void _setGeofence(LatLng geofenceCenter, double radius) {
     setState(() {
       if (isWithinGeofenceTime()) {
@@ -297,7 +338,7 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
             {}; // Jika tidak ada jadwal, lingkaran geofence tidak ditampilkan
       }
       geofenceLocation = geofenceCenter;
-      _geofenceRadius = radius;
+      radius = _geofenceRadius;
     });
   }
 
@@ -327,7 +368,7 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
             math.sin(deltaLngRad / 2) *
             math.sin(deltaLngRad / 2);
     double c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
-    double distance = earthRadius * c;
+    double distance = earthRadius.toDouble() * c;
     return distance;
   }
 

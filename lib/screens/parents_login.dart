@@ -75,7 +75,7 @@ class _ParentLoginPageState extends State<ParentLoginPage> {
               builder: (context) => ParentHomePage(username: username), // Pass the username to ParentHomePage
             ),
           );
-        } else {
+        } else if (response.statusCode == 401) {
           showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -100,8 +100,8 @@ class _ParentLoginPageState extends State<ParentLoginPage> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: const Text('Error'),
-              content: const Text('Failed to connect to the server'),
+              title: const Text('Log In Gagal'),
+              content: const Text('Invalid username or password'),
               actions: [
                 TextButton(
                   child: const Text('OK'),
