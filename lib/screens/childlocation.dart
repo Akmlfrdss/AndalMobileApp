@@ -38,7 +38,11 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
   TimeOfDay geofenceStartTime = const TimeOfDay(hour: 0, minute: 0);
   TimeOfDay geofenceEndTime = const TimeOfDay(hour: 0, minute: 0);
   bool _isLocationServiceEnabled = false;
-
+  bool _isInsideGeofence = false;
+  final StreamController<bool> _geofenceStreamController =StreamController<bool>.broadcast();
+  Timer? _autoUpdateTimer;
+  double _geofenceRadius = 100.0;
+  
   @override
   void dispose() {
     _mapController?.dispose();
@@ -47,8 +51,6 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     super.dispose();
   }
 
-  Timer? _autoUpdateTimer;
-  @override
   void initState() {
     super.initState();
     _getAddressFromCoordinates();
@@ -62,7 +64,7 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     _getDataFromDatabase();
 
     // Mulai timer otomatis untuk mengupdate lokasi setiap 5 detik
-    _autoUpdateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _autoUpdateTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       print('Auto Update Timer Executed');
       if (_isLocationServiceEnabled) {
         print('Updating location');
@@ -91,11 +93,10 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
       builder: (BuildContext context, Widget? child) {
         return Theme(
           data: ThemeData.light().copyWith(
-            primaryColor: Colors.blue, // Warna latar belakang header
-            colorScheme: const ColorScheme.light(
-                primary: Colors.blue), // Warna pilihan waktu
-            buttonTheme: const ButtonThemeData(
-                textTheme: ButtonTextTheme.primary), // Tombol OK
+            primaryColor: Colors.blue,
+            colorScheme: const ColorScheme.light(primary: Colors.blue),
+            buttonTheme:
+                const ButtonThemeData(textTheme: ButtonTextTheme.primary),
           ),
           child: child!,
         );
@@ -103,7 +104,6 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     );
 
     if (selectedStartTime == null) {
-      // User pressed Cancel, so return early
       return;
     }
 
@@ -113,11 +113,10 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
       builder: (BuildContext context, Widget? child) {
         return Theme(
           data: ThemeData.light().copyWith(
-            primaryColor: Colors.blue, // Warna latar belakang header teks
-            colorScheme: const ColorScheme.light(
-                primary: Colors.blue), // Warna pilihan waktu
-            buttonTheme: const ButtonThemeData(
-                textTheme: ButtonTextTheme.primary), // Tombol OK
+            primaryColor: Colors.blue,
+            colorScheme: const ColorScheme.light(primary: Colors.blue),
+            buttonTheme:
+                const ButtonThemeData(textTheme: ButtonTextTheme.primary),
           ),
           child: child!,
         );
@@ -125,9 +124,20 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     );
 
     if (selectedEndTime == null) {
-      // User pressed Cancel, so return early
       return;
     }
+
+    String formattedStartTime =
+        '${selectedStartTime.hour.toString().padLeft(2, '0')}:${selectedStartTime.minute.toString().padLeft(2, '0')}';
+
+    String formattedEndTime =
+        '${selectedEndTime.hour.toString().padLeft(2, '0')}:${selectedEndTime.minute.toString().padLeft(2, '0')}';
+
+        String UpdatedStartTime =
+        '${selectedStartTime.hour.toString().padLeft(2, '0')}:${selectedStartTime.minute.toString().padLeft(2, '0')}';
+
+    String UpdatedEndTime =
+        '${selectedEndTime.hour.toString().padLeft(2, '0')}:${selectedEndTime.minute.toString().padLeft(2, '0')}';
 
     setState(() {
       geofenceStartTime = selectedStartTime;
@@ -143,8 +153,8 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     );
 
     print('Selected Location: $selectedLocation');
-    print('Geofence StartTime: $geofenceStartTime');
-    print('Geofence EndTime: $geofenceEndTime');
+    print('Geofence StartTime: $formattedStartTime');
+    print('Geofence EndTime: $formattedEndTime');
 
     if (selectedLocation != null) {
       setState(() {
@@ -156,15 +166,26 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
         }
       });
 
-      // Simpan data geofence ke database di sini
-      ApiUtils.saveGeofenceDataToDatabase(
+      ApiUtils.UpdateGeofenceDataToDatabase(
+        childName: widget.childName,
         Context: context,
         Datausername: widget.childName,
         Datalatitude: selectedLocation.latitude,
         Datalongitude: selectedLocation.longitude,
         Dataradius: _geofenceRadius,
-        DatastartTime: geofenceStartTime,
-        DataendTime: geofenceEndTime,
+        DatastartTime: UpdatedStartTime,
+        DataendTime: UpdatedEndTime,
+      );
+
+      ApiUtils.SaveGeofenceHistoryToDatabase(
+        childName: widget.childName,
+        Context: context,
+        Historyusername: widget.childName,
+        Historylatitude: selectedLocation.latitude,
+        Historylongitude: selectedLocation.longitude,
+        Historyradius: _geofenceRadius,
+        HistorystartTime: formattedStartTime,
+        HistoryendTime: formattedEndTime,
       );
     }
   }
@@ -178,6 +199,7 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     // print('Response body: ${response.body}');
 
     if (response.statusCode == 200) {
+      print(response.body);
       final List<dynamic> data = json.decode(response.body);
       final geofenceData = data.firstWhere(
           (geofencedata) => geofencedata['username'] == widget.childName,
@@ -319,7 +341,6 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     } catch (e) {}
   }
 
-  double _geofenceRadius = 100.0;
   void _setGeofence(LatLng geofenceCenter, double radius) {
     setState(() {
       if (isWithinGeofenceTime()) {
@@ -348,7 +369,6 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
       final radius = _geofenceRadius;
       bool isInside =
           distance <= radius && isWithinGeofenceTime(); // Perbarui kondisi
-
       setState(() {
         _isInsideGeofence = isInside;
       });
@@ -371,10 +391,6 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     double distance = earthRadius.toDouble() * c;
     return distance;
   }
-
-  bool _isInsideGeofence = false;
-  final StreamController<bool> _geofenceStreamController =
-      StreamController<bool>.broadcast();
 
   void _updateGeofenceStatus() {
     _checkGeofence();
@@ -407,7 +423,6 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     }
   }
 
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(

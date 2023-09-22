@@ -55,7 +55,7 @@ class _ChildHomePageState extends State<ChildHomePage> {
     _checkLocationPermissionStatus();
     _getCurrentLocation();
     // Mulai timer dengan interval 1 detik
-    _updateTimer = Timer.periodic(Duration(milliseconds: 1), (timer) {
+    _updateTimer = Timer.periodic(Duration(milliseconds: 4), (timer) {
       print('Timer Executed');
       if (_isLocationServiceEnabled) {
         print('Sending data to backend');
@@ -65,7 +65,7 @@ class _ChildHomePageState extends State<ChildHomePage> {
     });
 
     // Mulai timer otomatis untuk mengupdate lokasi setiap 1 detik
-    _autoUpdateTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+    _autoUpdateTimer = Timer.periodic(Duration(seconds: 4), (timer) {
       print('Auto Update Timer Executed');
       if (_isLocationServiceEnabled) {
         print('Updating location');

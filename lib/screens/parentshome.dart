@@ -6,6 +6,7 @@ import 'childprofiles.dart';
 import 'package:http/http.dart' as http;
 import 'parents_login.dart';
 import 'package:tracking_loc2/main.dart';
+import 'parenthistory.dart';
 
 class ParentHomePage extends StatefulWidget {
   final String username;
@@ -178,6 +179,79 @@ class _ParentHomePageState extends State<ParentHomePage> {
                         ),
                       ),
                     ),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        height: 150, // Adjust the height as needed
+                        padding: const EdgeInsets.symmetric(horizontal: 100.0),
+                        decoration: BoxDecoration(
+                          color: Color.fromARGB(0, 250, 250, 250),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(40.0),
+                            topRight: Radius.circular(40.0),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align buttons evenly
+                          children: [
+                            Container(
+                              width: 70.0, // Adjust button width as needed
+                              height: 70.0,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => HistoryPage(username: widget.username),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  primary: Colors.white,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.history,
+                                      size: 30,
+                                      color: Color.fromARGB(255, 31, 31, 31),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: 70.0, // Adjust button width as needed
+                              height: 70.0,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ProfilePage(username: widget.username),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  primary: Colors.white,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.person,
+                                      size: 30,
+                                      color: Color.fromARGB(255, 31, 31, 31),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -185,7 +259,7 @@ class _ParentHomePageState extends State<ParentHomePage> {
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
-                  height: 300,
+                  height: 340,
                   width: 500,
                   decoration: BoxDecoration(
                     color: Color.fromARGB(
@@ -241,7 +315,6 @@ class _ParentHomePageState extends State<ParentHomePage> {
                                           longitude:
                                               childProfiles[index].longitude,
                                         ),
-                                    
                                       ),
                                     );
                                   },
@@ -252,7 +325,9 @@ class _ParentHomePageState extends State<ParentHomePage> {
                             },
                           ),
                         ),
-                      ])),
+                      ]
+                    )
+                  ),
             ),
             Positioned(
               top: 0,
@@ -266,43 +341,6 @@ class _ParentHomePageState extends State<ParentHomePage> {
                   onPressed: _logOut,
                 ),
               ),
-            ),
-          ],
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-            if (index == 1) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => HistoryPage(username: widget.username),
-                ),
-              );
-            } else if (index == 2) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ProfilePage(username: widget.username),
-                ),
-              );
-            }
-          },
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.history),
-              label: 'History',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
             ),
           ],
         ),
@@ -402,6 +440,7 @@ class _ParentHomePageState extends State<ParentHomePage> {
                       longitude: longitude,
                     );
                     _saveChildProfile(newProfile);
+                    _addChildProfile(newProfile);
                     Navigator.of(context).pop();
                   },
                   child: const Text('Simpan'),
@@ -487,59 +526,7 @@ class _ParentHomePageState extends State<ParentHomePage> {
     }
   }
 }
-  
 
-class HistoryPage extends StatelessWidget {
-  final String username;
-
-  const HistoryPage({Key? key, required this.username}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('History'),
-      ),
-      body: const Center(
-        child: Text('Halaman History'),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ParentHomePage(username: username),
-              ),
-            );
-          } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ProfilePage(username: username),
-              ),
-            );
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'History',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class ProfilePage extends StatelessWidget {
   final String username;

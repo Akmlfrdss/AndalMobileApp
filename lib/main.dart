@@ -21,12 +21,10 @@ void main() async {
       ),
       home: userType == 'parent'
           ? ParentHomePage(
-              username:
-                  username ?? '') // Ganti dengan halaman orang tua yang sesuai
+              username: username ?? '') // Ganti dengan halaman orang tua yang sesuai
           : userType == 'child'
               ? ChildHomePage(
-                  username: childUsername ??
-                      '') // Ganti dengan halaman anak yang sesuai
+                  username: childUsername ?? '') // Ganti dengan halaman anak yang sesuai
               : const LandingPage(),
     ),
   );

@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 
 class ApiUtils {
+  
   static Future<void> getDataFromAPI(
     String childName,
     Function(LatLng) updateLocation,
@@ -28,28 +29,113 @@ class ApiUtils {
     }
   }
 
-    static Future<void> saveGeofenceDataToDatabase({
+  static Future<void> UpdateGeofenceDataToDatabase({
+    required String childName,
     required BuildContext Context,
     required String Datausername,
     required double Datalatitude,
     required double Datalongitude,
     required double Dataradius,
-    required TimeOfDay DatastartTime,
-    required TimeOfDay DataendTime,
+    required String DatastartTime,
+    required String DataendTime,
     }) async {
     final url = Uri.parse(
-        'https://childtrackr-backend-production.up.railway.app/geofence/data');
+        'https://childtrackr-backend-production.up.railway.app/geofence/data/${childName}');
+    Map<String, String> headers = {'Content-Type': 'application/json'};
+    http.Response response = await http.put(
+    url,
+    headers: headers,
+    body: jsonEncode({
+      'username': Datausername,
+      'latitude': Datalatitude.toString(),
+      'longitude': Datalongitude.toString(),
+      'radius': Dataradius.toString(),
+      'start_time': DatastartTime,
+      'end_time': DataendTime,
+    }),
+  );
+
+    if (response.statusCode == 200) {
+      showDialog(
+        context: Context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Success'),
+            content: const Text('Geofence Berhasil Disimpan'),
+            actions: [
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else if (response.statusCode == 404) {
+      print(response.statusCode);
+      showDialog(
+        context: Context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: const Text('Geofence Gagal Diupdate'),
+            actions: [
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      showDialog(
+        context: Context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: const Text('Terjadi Error Saat Update Geofence'),
+            actions: [
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  static Future<void> SaveGeofenceHistoryToDatabase({
+    required String childName,
+    required BuildContext Context,
+    required String Historyusername,
+    required double Historylatitude,
+    required double Historylongitude,
+    required double Historyradius,
+    required String HistorystartTime,
+    required String HistoryendTime,
+    }) async {
+    final url = Uri.parse(
+        'https://childtrackr-backend-production.up.railway.app/history/data');
     Map<String, String> headers = {'Content-Type': 'application/json'};
     http.Response response = await http.post(
       url,
       headers: headers,
       body: jsonEncode({
-        'username': Datausername,
-        'latitude': Datalatitude.toString(),
-        'longitude': Datalongitude.toString(),
-        'radius': Dataradius.toString(),
-        'start_time': '${DatastartTime.hour}:${DatastartTime.minute}',
-        'end_time': '${DataendTime.hour}:${DataendTime.minute}',
+        'username': Historyusername,
+        'latitude': Historylatitude.toString(),
+        'longitude': Historylongitude.toString(),
+        'radius': Historyradius.toString(),
+        'start_time': HistorystartTime,
+        'end_time': HistoryendTime,
       }),
     );
 
@@ -59,7 +145,7 @@ class ApiUtils {
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Success'),
-            content: const Text('Data Berhasil Terupdate'),
+            content: const Text('Di Tambahkan ke History'),
             actions: [
               TextButton(
                 child: const Text('OK'),
@@ -78,7 +164,7 @@ class ApiUtils {
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Error'),
-            content: const Text('Semua Data Harus Terisi'),
+            content: const Text('Gagal Menyimpan History'),
             actions: [
               TextButton(
                 child: const Text('OK'),
@@ -96,7 +182,7 @@ class ApiUtils {
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Error'),
-            content: const Text('Data Gagal Diupdate'),
+            content: const Text('Terjadi Error Saat Update History'),
             actions: [
               TextButton(
                 child: const Text('OK'),
