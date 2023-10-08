@@ -39,10 +39,11 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
   TimeOfDay geofenceEndTime = const TimeOfDay(hour: 0, minute: 0);
   bool _isLocationServiceEnabled = false;
   bool _isInsideGeofence = false;
-  final StreamController<bool> _geofenceStreamController =StreamController<bool>.broadcast();
+  final StreamController<bool> _geofenceStreamController =
+      StreamController<bool>.broadcast();
   Timer? _autoUpdateTimer;
   double _geofenceRadius = 100.0;
-  
+
   @override
   void dispose() {
     _mapController?.dispose();
@@ -55,6 +56,7 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     super.initState();
     _getAddressFromCoordinates();
     _updateGeofenceStatus();
+    isWithinGeofenceTime();
 
     if (isWithinGeofenceTime()) {
       _scheduleGeofenceDisplay();
@@ -80,6 +82,9 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
         _setGeofence(geofenceLocation!, _geofenceRadius);
         _checkGeofence();
         isWithinGeofenceTime();
+        if (isWithinGeofenceTime()) {
+          _scheduleGeofenceDisplay();
+        }
         _updateGeofenceStatus();
         _getDataFromDatabase();
       }
@@ -133,7 +138,7 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     String formattedEndTime =
         '${selectedEndTime.hour.toString().padLeft(2, '0')}:${selectedEndTime.minute.toString().padLeft(2, '0')}';
 
-        String UpdatedStartTime =
+    String UpdatedStartTime =
         '${selectedStartTime.hour.toString().padLeft(2, '0')}:${selectedStartTime.minute.toString().padLeft(2, '0')}';
 
     String UpdatedEndTime =
@@ -247,12 +252,9 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     final endTime =
         TimeOfDay(hour: geofenceEndTime.hour, minute: geofenceEndTime.minute);
 
-    if (currentTime.hour > startTime.hour && currentTime.hour < endTime.hour) {
-      return true;
-    } else if (currentTime.hour == startTime.hour &&
-        currentTime.minute >= startTime.minute) {
-      return true;
-    } else if (currentTime.hour == endTime.hour &&
+    if (currentTime.hour >= startTime.hour && 
+        currentTime.hour <= endTime.hour &&
+        currentTime.minute >= startTime.minute &&
         currentTime.minute <= endTime.minute) {
       return true;
     } else {
@@ -374,6 +376,7 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
       });
     }
   }
+
   // Menghitung jarak antara dua titik koordinat menggunakan formula Haversine
   double _calculateDistance(LatLng start, LatLng end) {
     const int earthRadius = 6371000; //meter
