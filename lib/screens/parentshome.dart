@@ -110,6 +110,33 @@ class _ParentHomePageState extends State<ParentHomePage> {
     );
   }
 
+  Future<void> _confirmLogout() async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Log Out'),
+          content: Text('Apakah Anda yakin ingin keluar?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Tidak'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog
+              },
+            ),
+            TextButton(
+              child: Text('Ya'),
+              onPressed: () {
+                _logOut(); // Panggil fungsi log out saat tombol "Ya" ditekan
+                Navigator.of(context).pop(); // Tutup dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -259,7 +286,7 @@ class _ParentHomePageState extends State<ParentHomePage> {
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
-                  height: 340,
+                  height: 370,
                   width: 500,
                   decoration: BoxDecoration(
                     color: Color.fromARGB(
@@ -338,7 +365,7 @@ class _ParentHomePageState extends State<ParentHomePage> {
                 elevation: 0,
                 leading: IconButton(
                   icon: Icon(Icons.logout_outlined),
-                  onPressed: _logOut,
+                  onPressed: _confirmLogout,
                 ),
               ),
             ),

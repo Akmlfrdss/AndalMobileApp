@@ -374,7 +374,7 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
       });
     }
   }
-
+  // Menghitung jarak antara dua titik koordinat menggunakan formula Haversine
   double _calculateDistance(LatLng start, LatLng end) {
     const int earthRadius = 6371000; //meter
     double lat1Rad = start.latitude * math.pi / 180;

@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tracking_loc2/main.dart';
 
+
 class ChildHomePage extends StatefulWidget {
   final String username;
 
@@ -55,7 +56,7 @@ class _ChildHomePageState extends State<ChildHomePage> {
     _checkLocationPermissionStatus();
     _getCurrentLocation();
     // Mulai timer dengan interval 1 detik
-    _updateTimer = Timer.periodic(Duration(milliseconds: 4), (timer) {
+    _updateTimer = Timer.periodic(Duration(seconds: 4), (timer) {
       print('Timer Executed');
       if (_isLocationServiceEnabled) {
         print('Sending data to backend');
@@ -185,6 +186,33 @@ class _ChildHomePageState extends State<ChildHomePage> {
     );
   }
 
+  Future<void> _confirmLogout() async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Log Out'),
+          content: Text('Apakah Anda yakin ingin keluar?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Tidak'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog
+              },
+            ),
+            TextButton(
+              child: Text('Ya'),
+              onPressed: () {
+                _logOut(); // Panggil fungsi log out saat tombol "Ya" ditekan
+                Navigator.of(context).pop(); // Tutup dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -240,7 +268,7 @@ class _ChildHomePageState extends State<ChildHomePage> {
               elevation: 0,
               leading: IconButton(
                 icon: Icon(Icons.logout_outlined),
-                onPressed: _logOut,
+                onPressed: _confirmLogout,
               ),
             ),
           ),
