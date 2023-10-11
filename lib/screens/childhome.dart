@@ -9,7 +9,8 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tracking_loc2/main.dart';
-
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
+    as bg;
 
 class ChildHomePage extends StatefulWidget {
   final String username;
@@ -53,8 +54,21 @@ class _ChildHomePageState extends State<ChildHomePage> {
   @override
   void initState() {
     super.initState();
-    _checkLocationPermissionStatus();
+    _requestLocationPermission();
     _getCurrentLocation();
+    bg.BackgroundGeolocation.setConfig(bg.Config(
+      desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
+      distanceFilter: 10.0,
+      stopTimeout: 1,
+      notification: bg.Notification(title: 'hai'),
+      debug: true,
+      logLevel: bg.Config.LOG_LEVEL_VERBOSE,
+      stopOnTerminate: false, // Pastikan stopOnTerminate: false
+      startOnBoot: true, // Aktifkan saat booting
+    ));
+
+    bg.BackgroundGeolocation.start();
+
     // Mulai timer dengan interval 1 detik
     _updateTimer = Timer.periodic(Duration(seconds: 4), (timer) {
       print('Timer Executed');
@@ -72,6 +86,13 @@ class _ChildHomePageState extends State<ChildHomePage> {
         print('Updating location');
         _goToCurrentLocation();
         _getCurrentLocation();
+        bg.BackgroundGeolocation.startBackgroundTask();
+        bg.BackgroundGeolocation.onLocation((bg.Location location) {
+          // Di sini Anda dapat mengakses koordinat lokasi yang diperbarui.
+          double latitude = location.coords.latitude;
+          double longitude = location.coords.longitude;
+          _sendDataToBackend(latitude, longitude);
+        });
       }
     });
   }
@@ -83,12 +104,21 @@ class _ChildHomePageState extends State<ChildHomePage> {
     super.dispose();
   }
 
-  Future<void> _checkLocationPermissionStatus() async {
-    var status = await Permission.locationWhenInUse.status;
+  Future<void> _requestLocationPermission() async {
+    // Minta izin lokasi "ACCESS_FINE_LOCATION".
+    var status = await Permission.location.request();
+
+    // Jika pengguna memberikan izin "ALLOW", maka lanjutkan untuk meminta izin latar belakang.
     if (status.isGranted) {
-      setState(() {
-        _isLocationServiceEnabled = true;
-      });
+      var backgroundStatus = await Permission.locationAlways.request();
+
+      // Check status izin latar belakang.
+      if (backgroundStatus.isGranted) {
+        // Konfigurasi flutter_background_geolocation agar berjalan di latar belakang.
+        setState(() {
+          _isLocationServiceEnabled = true;
+        });
+      }
     }
   }
 
@@ -131,6 +161,12 @@ class _ChildHomePageState extends State<ChildHomePage> {
         _isLocationServiceEnabled = true;
       });
       await _getAddressFromCoordinates();
+
+      // Kirim data koordinat ke backend saat aplikasi ditutup
+      if (_isLocationServiceEnabled) {
+        _sendDataToBackend(
+            _currentLocation.latitude, _currentLocation.longitude);
+      }
     } catch (e) {
       print("Error getting current location: $e");
       _showSnackBar(
