@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'childhome.dart';
 
-
 class ChildLoginPage extends StatefulWidget {
   const ChildLoginPage({Key? key}) : super(key: key);
 
@@ -55,8 +54,8 @@ class _ChildLoginPageState extends State<ChildLoginPage> {
 
     // Make an HTTP request to authenticate the user
     try {
-      var url = Uri.parse('https://childtrackr-backend-production.up.railway.app/child/childlogin');
-      // var url = Uri.parse('http://10.0.2.2:3000/childlogin'); // Replace with your actual API endpoint
+      var url = Uri.parse(
+          'https://childtrackr-backend-production.up.railway.app/child/childlogin');
       var body = jsonEncode({'username': username, 'password': password});
       var headers = {'Content-Type': 'application/json'};
 
@@ -71,11 +70,13 @@ class _ChildLoginPageState extends State<ChildLoginPage> {
           SharedPreferences prefs = await SharedPreferences.getInstance();
           prefs.setString('userType', 'child');
           prefs.setString('childUsername', username);
+          prefs.setString('password', password);
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => ChildHomePage(username: username)  // Pass the username to ParentHomePage
-            ),
+                builder: (context) => ChildHomePage(
+                    username: username) // Pass the username to ParentHomePage
+                ),
           );
         } else {
           showDialog(
@@ -223,6 +224,3 @@ class _ChildLoginPageState extends State<ChildLoginPage> {
     );
   }
 }
-
-
-

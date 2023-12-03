@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'childlocation.dart';
 import 'childprofiles.dart';
@@ -21,11 +22,58 @@ class ParentHomePage extends StatefulWidget {
 class _ParentHomePageState extends State<ParentHomePage> {
   int _currentIndex = 0;
   List<ChildProfile> childProfiles = [];
+  // ignore: unused_field
+  bool _isLocationServiceEnabled = false;
 
   @override
   void initState() {
     super.initState();
     _getChildProfiles();
+    _requestLocationPermission();
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        action: SnackBarAction(
+          label: 'Buka Pengaturan',
+          onPressed: () {
+            openAppSettings();
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _requestLocationPermission() async {
+    // Minta izin lokasi "ACCESS_FINE_LOCATION".
+    var status = await Permission.locationAlways.request();
+    if (status.isGranted) {
+      
+      setState(() {
+        _isLocationServiceEnabled = true;
+      });
+    } else {
+      // Handle jika izin lokasi tidak diberikan.
+      // Tampilkan pesan kepada pengguna dan beri tahu cara memberikan izin melalui pengaturan perangkat.
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Izin Lokasi Diperlukan'),
+          content: Text(
+              'Aplikasi memerlukan izin lokasi untuk berfungsi dengan baik. Silakan berikan izin melalui pengaturan perangkat.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                openAppSettings();
+              },
+              child: Text('Buka Pengaturan'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   void _addChildProfile(ChildProfile newProfile) {
@@ -41,6 +89,7 @@ class _ParentHomePageState extends State<ParentHomePage> {
         childProfiles = profiles;
       });
     } catch (error) {
+      print('error =${error}');
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -62,9 +111,12 @@ class _ParentHomePageState extends State<ParentHomePage> {
   }
 
   Future<List<ChildProfile>> _fetchChildProfiles() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? getToken = prefs.getString('getToken');
     final url = Uri.parse(
         'https://childtrackr-backend-production.up.railway.app/user/userProfiles');
-    final response = await http.get(url);
+    final headers = {'Authorization': '${getToken}'};
+    final response = await http.get(url, headers: headers);
 
     print('Response status code: ${response.statusCode}');
     print('Response body: ${response.body}'); // Print the response body
@@ -75,9 +127,9 @@ class _ParentHomePageState extends State<ParentHomePage> {
           .map((data) => ChildProfile(
                 username: data['username'],
                 name: data['name'],
-                latitude: double.parse(
-                    data['latitude'].toString()), // Ubah tipe data ke double
-                longitude: double.parse(data['longitude'].toString()),
+                latitude:
+                    data['latitude'].toString(), // Ubah tipe data ke double
+                longitude: data['longitude'].toString(),
               ))
           .toList();
       return childProfiles;
@@ -100,6 +152,7 @@ class _ParentHomePageState extends State<ParentHomePage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.remove('userType');
     prefs.remove('username');
+    prefs.remove('getToken');
 
     Navigator.pushReplacement(
       context,
@@ -219,17 +272,19 @@ class _ParentHomePageState extends State<ParentHomePage> {
                           ),
                         ),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align buttons evenly
+                          mainAxisAlignment: MainAxisAlignment
+                              .spaceBetween, // Align buttons evenly
                           children: [
                             Container(
-                              width: 70.0, // Adjust button width as needed
-                              height: 70.0,
+                              width: 60.0, // Adjust button width as needed
+                              height: 60.0,
                               child: ElevatedButton(
                                 onPressed: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => HistoryPage(username: widget.username),
+                                      builder: (context) => HistoryPage(
+                                          username: widget.username),
                                     ),
                                   );
                                 },
@@ -241,7 +296,7 @@ class _ParentHomePageState extends State<ParentHomePage> {
                                   children: [
                                     const Icon(
                                       Icons.history,
-                                      size: 30,
+                                      size: 25,
                                       color: Color.fromARGB(255, 31, 31, 31),
                                     ),
                                   ],
@@ -249,14 +304,15 @@ class _ParentHomePageState extends State<ParentHomePage> {
                               ),
                             ),
                             Container(
-                              width: 70.0, // Adjust button width as needed
-                              height: 70.0,
+                              width: 60.0, // Adjust button width as needed
+                              height: 60.0,
                               child: ElevatedButton(
                                 onPressed: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => ProfilePage(username: widget.username),
+                                      builder: (context) => ProfilePage(
+                                          username: widget.username),
                                     ),
                                   );
                                 },
@@ -268,7 +324,7 @@ class _ParentHomePageState extends State<ParentHomePage> {
                                   children: [
                                     const Icon(
                                       Icons.person,
-                                      size: 30,
+                                      size: 25,
                                       color: Color.fromARGB(255, 31, 31, 31),
                                     ),
                                   ],
@@ -309,7 +365,7 @@ class _ParentHomePageState extends State<ParentHomePage> {
                     ),
                   ),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 30.0, vertical: 20.0),
+                      horizontal: 40.0, vertical: 20.0),
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -337,10 +393,10 @@ class _ParentHomePageState extends State<ParentHomePage> {
                                         builder: (context) =>
                                             ChildLocationMapPage(
                                           childName: childProfiles[index].name,
-                                          latitude:
-                                              childProfiles[index].latitude,
-                                          longitude:
-                                              childProfiles[index].longitude,
+                                          latitude: double.parse(
+                                              childProfiles[index].latitude),
+                                          longitude: double.parse(
+                                              childProfiles[index].latitude),
                                         ),
                                       ),
                                     );
@@ -352,9 +408,7 @@ class _ParentHomePageState extends State<ParentHomePage> {
                             },
                           ),
                         ),
-                      ]
-                    )
-                  ),
+                      ])),
             ),
             Positioned(
               top: 0,
@@ -412,8 +466,8 @@ class _ParentHomePageState extends State<ParentHomePage> {
 
   void _addProfile() async {
     String childUsername = '';
-    double latitude = 0.0;
-    double longitude = 0.0;
+    String latitude = ''.toString();
+    String longitude = ''.toString();
 
     showDialog(
       context: context,
@@ -452,9 +506,9 @@ class _ParentHomePageState extends State<ParentHomePage> {
                   const SizedBox(height: 10.0),
                   Text('Username: $childUsername'),
                   Text(
-                      'Latitude: ${latitude.toStringAsFixed(6)}'), // Tampilkan dengan format yang diinginkan
+                      'Latitude: ${latitude}'), // Tampilkan dengan format yang diinginkan
                   Text(
-                      'Longitude: ${longitude.toStringAsFixed(6)}'), // Tampilkan dengan format yang diinginkan
+                      'Longitude: ${longitude}'), // Tampilkan dengan format yang diinginkan
                 ],
               ),
               actions: [
@@ -489,8 +543,8 @@ class _ParentHomePageState extends State<ParentHomePage> {
   Future<void> _saveChildProfile(ChildProfile newProfile) async {
     String username = newProfile.username;
     String name = newProfile.name;
-    double latitude = newProfile.latitude;
-    double longitude = newProfile.longitude;
+    String latitude = newProfile.latitude;
+    String longitude = newProfile.longitude;
     Uri url = Uri.parse(
         'https://childtrackr-backend-production.up.railway.app/user/addProfile');
     Map<String, String> headers = {'Content-Type': 'application/json'};
@@ -553,7 +607,6 @@ class _ParentHomePageState extends State<ParentHomePage> {
     }
   }
 }
-
 
 class ProfilePage extends StatelessWidget {
   final String username;

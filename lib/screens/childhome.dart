@@ -42,7 +42,6 @@ class _ChildHomePageState extends State<ChildHomePage> {
         action: SnackBarAction(
           label: 'Buka Pengaturan',
           onPressed: () {
-            // Open device settings to allow location permission
             openAppSettings();
           },
         ),
@@ -60,7 +59,6 @@ class _ChildHomePageState extends State<ChildHomePage> {
       desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
       distanceFilter: 10.0,
       stopTimeout: 1,
-      notification: bg.Notification(title: 'hai'),
       debug: true,
       logLevel: bg.Config.LOG_LEVEL_VERBOSE,
       stopOnTerminate: false, // Pastikan stopOnTerminate: false
@@ -106,19 +104,30 @@ class _ChildHomePageState extends State<ChildHomePage> {
 
   Future<void> _requestLocationPermission() async {
     // Minta izin lokasi "ACCESS_FINE_LOCATION".
-    var status = await Permission.location.request();
-
-    // Jika pengguna memberikan izin "ALLOW", maka lanjutkan untuk meminta izin latar belakang.
+    var status = await Permission.locationAlways.request();
     if (status.isGranted) {
-      var backgroundStatus = await Permission.locationAlways.request();
-
-      // Check status izin latar belakang.
-      if (backgroundStatus.isGranted) {
-        // Konfigurasi flutter_background_geolocation agar berjalan di latar belakang.
-        setState(() {
-          _isLocationServiceEnabled = true;
-        });
-      }
+      setState(() {
+        _isLocationServiceEnabled = true;
+      });
+    } else {
+      // Handle jika izin lokasi tidak diberikan.
+      // Tampilkan pesan kepada pengguna dan beri tahu cara memberikan izin melalui pengaturan perangkat.
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Izin Lokasi Diperlukan'),
+          content: Text(
+              'Aplikasi memerlukan izin lokasi untuk berfungsi dengan baik. Silakan berikan izin melalui pengaturan perangkat.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -212,6 +221,7 @@ class _ChildHomePageState extends State<ChildHomePage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.remove('userType');
     prefs.remove('username');
+    prefs.remove('password');
 
     Navigator.pushReplacement(
       context,
@@ -239,8 +249,59 @@ class _ChildHomePageState extends State<ChildHomePage> {
             TextButton(
               child: Text('Ya'),
               onPressed: () {
-                _logOut(); // Panggil fungsi log out saat tombol "Ya" ditekan
+                _confirmLogoutpassword();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmLogoutpassword() async {
+    TextEditingController passwordController = TextEditingController();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? password = prefs.getString('password');
+    // ignore: use_build_context_synchronously
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Konfirmasi Log Out'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Masukkan password:'),
+              TextFormField(
+                controller: passwordController,
+                obscureText: true, // Sembunyikan input password
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Batal'),
+              onPressed: () {
                 Navigator.of(context).pop(); // Tutup dialog
+              },
+            ),
+            TextButton(
+              child: Text('Konfirmasi'),
+              onPressed: () {
+                String enteredPassword = passwordController.text;
+                // Tambahkan logika verifikasi password di sini
+                if (enteredPassword == password) {
+                  // Password benar, lakukan tindakan log out atau yang diinginkan
+                  _logOut();
+                  Navigator.of(context).pop(); // Tutup dialog
+                } else {
+                  // Password salah, berikan feedback kepada pengguna
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Password salah. Coba lagi.'),
+                    ),
+                  );
+                }
               },
             ),
           ],

@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 import 'dart:convert';
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -41,8 +42,11 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
   bool _isInsideGeofence = false;
   final StreamController<bool> _geofenceStreamController =
       StreamController<bool>.broadcast();
-  Timer? _autoUpdateTimer;
+  // ignore: unused_field
+  Timer? _autoUpdateTimer, _delayednotification;
   double _geofenceRadius = 100.0;
+  bool? notificationDisplayed;
+  String? statuslokasi;
 
   @override
   void dispose() {
@@ -54,6 +58,11 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
 
   void initState() {
     super.initState();
+    AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
+      if (!isAllowed) {
+        AwesomeNotifications().requestPermissionToSendNotifications();
+      }
+    });
     _getAddressFromCoordinates();
     _updateGeofenceStatus();
     isWithinGeofenceTime();
@@ -65,7 +74,7 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     _checkLocationPermissionStatus();
     _getDataFromDatabase();
 
-    // Mulai timer otomatis untuk mengupdate lokasi setiap 5 detik
+    // Mulai timer otomatis untuk mengupdate lokasi setiap 4 detik
     _autoUpdateTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       print('Auto Update Timer Executed');
       if (_isLocationServiceEnabled) {
@@ -89,6 +98,71 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
         _getDataFromDatabase();
       }
     });
+    //notif delay selama 10 detik
+    _delayednotification = Timer.periodic(Duration(seconds: 10), (timer) {
+        if (notificationDisplayed == null ||
+            notificationDisplayed == false ||
+            notificationDisplayed == true) {
+          if (!_isInsideGeofence &&
+              isWithinGeofenceTime() &&
+              (notificationDisplayed == null ||
+                  notificationDisplayed == true)) {
+            ApiUtils.SaveNotificationToDatabase(
+            childName: widget.childName,
+            Context: context,
+            Notifusername: widget.childName,
+            Notifstatus: 'di luar');
+            print('di luar lokasi');
+            notificationDisplayed = false;
+            triggerNotification();
+          } else if (_isInsideGeofence &&
+              isWithinGeofenceTime() &&
+              (notificationDisplayed == null ||
+                  notificationDisplayed == false)) {
+            ApiUtils.SaveNotificationToDatabase(
+            childName: widget.childName,
+            Context: context,
+            Notifusername: widget.childName,
+            Notifstatus: 'di dalam');
+            print('di dalam lokasi');
+            notificationDisplayed = true;
+            triggerNotification();
+          } else if (!_isInsideGeofence &&
+              !isWithinGeofenceTime() &&
+              (notificationDisplayed == true ||
+                  notificationDisplayed == false)) {
+            notificationDisplayed = null;
+          }
+        }
+        if (notificationDisplayed == null) {
+          statuslokasi = 'Tidak ada';
+        } else if (notificationDisplayed == false) {
+          
+          statuslokasi = 'di luar';
+        } else if (notificationDisplayed == true) {
+          statuslokasi = 'di dalam';
+        }
+        print('status notifikasi saat ini ${statuslokasi}');
+    });
+  }
+
+  void triggerNotification() async {
+    // Menunda eksekusi fungsi selama 10 detikR
+    await Future.delayed(Duration(seconds: 10));
+
+    if (notificationDisplayed == true) {
+      AwesomeNotifications().createNotification(
+          content: NotificationContent(
+              id: 1,
+              channelKey: 'basic_channel',
+              body: '${widget.childName} berada di dalam area'));
+    } else if (notificationDisplayed == false) {
+      AwesomeNotifications().createNotification(
+          content: NotificationContent(
+              id: 2,
+              channelKey: 'basic_channel',
+              body: '${widget.childName} berada di luar area'));
+    }
   }
 
   Future<void> _selectLocation() async {
@@ -252,7 +326,7 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
     final endTime =
         TimeOfDay(hour: geofenceEndTime.hour, minute: geofenceEndTime.minute);
 
-    if (currentTime.hour >= startTime.hour && 
+    if (currentTime.hour >= startTime.hour &&
         currentTime.hour <= endTime.hour &&
         currentTime.minute >= startTime.minute &&
         currentTime.minute <= endTime.minute) {
@@ -502,7 +576,7 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
                   ),
                   const SizedBox(height: 5.0),
                   Text(
-                    'Lokasi : $_address (${_currentLocation.latitude} ${_currentLocation.longitude})',
+                    'Lokasi : $_address',
                     style: const TextStyle(
                         fontSize: 16.0,
                         color: Color.fromARGB(255, 165, 164, 164),

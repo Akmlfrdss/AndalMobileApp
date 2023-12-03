@@ -11,108 +11,113 @@ class ParentRegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<ParentRegisterPage> {
+  final TextEditingController _emailcontroller = TextEditingController();
   final TextEditingController _userController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-Future<void> _register() async {
-  String username = _userController.text;
-  String password = _passwordController.text;
+  Future<void> _register() async {
+    String email = _emailcontroller.text;
+    String username = _userController.text;
+    String password = _passwordController.text;
 
-  // Make a POST request to the registration endpoint
-  // Uri url = Uri.parse('http://10.0.2.2:3000/register');
-  Uri url = Uri.parse('https://childtrackr-backend-production.up.railway.app/user/register');
-  Map<String, String> headers = {'Content-Type': 'application/json'};
-  String body = '{"username": "$username", "password": "$password"}';
+    // Make a POST request to the registration endpoint
+    // Uri url = Uri.parse('http://10.0.2.2:3000/register');
+    Uri url = Uri.parse(
+        'https://childtrackr-backend-production.up.railway.app/user/register');
+    Map<String, String> headers = {'Content-Type': 'application/json'};
+    String body =
+        '{"username": "$username", "password": "$password"},"email"; "$email"';
 
-  try {
-    http.Response response = await http.post(url, headers: headers, body: body);
-
-    if (response.statusCode == 200) {
-      // ignore: use_build_context_synchronously
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Success'),
-            content: const Text('Registration successful'),
-            actions: [
-              TextButton(
-                child: const Text('OK'),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ParentLoginPage(),
-                    ),
-                  );
-                },
-              ),
-            ],
-          );
-        },
-      );
-    } if (response.statusCode == 400) {
-      // ignore: use_build_context_synchronously
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Error'),
-            content: const Text('user already exists'),
-            actions: [
-              TextButton(
-                child: const Text('OK'),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          );
-        },
-      );
-    }
-     else {
-      // ignore: use_build_context_synchronously
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Error'),
-            content: const Text('Pastikan password minimal 8 karakter yang mengandung kapital dan angka'),
-            actions: [
-              TextButton(
-                child: const Text('OK'),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          );
-        },
-      );
-    }
-  } catch (error) {
-    print('Error during registration: $error');
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Error'),
-          content: const Text('An error occurred during registration'),
-          actions: [
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-          ],
+    try {
+      http.Response response =
+          await http.post(url, headers: headers, body: body);
+      print(response.statusCode);
+      if (response.statusCode == 200) {
+        // ignore: use_build_context_synchronously
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Success'),
+              content: const Text('Registration successful'),
+              actions: [
+                TextButton(
+                  child: const Text('OK'),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ParentLoginPage(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            );
+          },
         );
-      },
-    );
+      }
+      if (response.statusCode == 400) {
+        // ignore: use_build_context_synchronously
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Error'),
+              content: const Text('user already exists'),
+              actions: [
+                TextButton(
+                  child: const Text('OK'),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        // ignore: use_build_context_synchronously
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Error'),
+              content: const Text(
+                  'Pastikan password minimal 8 karakter yang mengandung kapital dan angka'),
+              actions: [
+                TextButton(
+                  child: const Text('OK'),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      }
+    } catch (error) {
+      print('Error during registration: $error');
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: const Text('An error occurred during registration'),
+            actions: [
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -155,6 +160,22 @@ Future<void> _register() async {
                     obscureText: true,
                     decoration: const InputDecoration(
                       labelText: 'Password',
+                      fillColor: Colors.white,
+                      filled: true,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16.0),
+            Row(
+              children: [
+                const SizedBox(width: 20.0),
+                Expanded(
+                  child: TextFormField(
+                    controller: _emailcontroller,
+                    decoration: const InputDecoration(
+                      labelText: 'email',
                       fillColor: Colors.white,
                       filled: true,
                     ),

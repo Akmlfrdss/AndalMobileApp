@@ -13,8 +13,8 @@ class ParentLoginPage extends StatefulWidget {
 }
 
 class _ParentLoginPageState extends State<ParentLoginPage> {
-  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
 
   void _goToRegister() {
     Navigator.push(
@@ -27,17 +27,21 @@ class _ParentLoginPageState extends State<ParentLoginPage> {
   }
 
   Future<void> _login() async {
-    String username = _usernameController.text;
     String password = _passwordController.text;
+    String email = _emailController.text;
+    // SharedPreferences prefs = await SharedPreferences.getInstance();
+    // String token = prefs.getString('getToken').toString();
+    // bool? isAuthenticated = prefs.getBool('Authenticated');
 
+    // print('${token} , ${isAuthenticated}');
     // Example validation
-    if (username.isEmpty || password.isEmpty) {
+    if (email.isEmpty || password.isEmpty) {
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Error'),
-            content: const Text('Username or password cannot be empty'),
+            content: const Text('Email or password cannot be empty'),
             actions: [
               TextButton(
                 child: const Text('OK'),
@@ -54,8 +58,9 @@ class _ParentLoginPageState extends State<ParentLoginPage> {
 
     // Make an HTTP request to authenticate the user
     try {
-      var url = Uri.parse('https://childtrackr-backend-production.up.railway.app/user/login'); // Replace with your actual API endpoint
-      var body = jsonEncode({'username': username, 'password': password});
+      var url = Uri.parse(
+          'https://childtrackr-backend-production.up.railway.app/user/login'); // Replace with your actual API endpoint
+      var body = jsonEncode({'email': email, 'password': password});
       var headers = {'Content-Type': 'application/json'};
 
       var response = await http.post(url, body: body, headers: headers);
@@ -64,15 +69,21 @@ class _ParentLoginPageState extends State<ParentLoginPage> {
         // Parse the JSON response
         var data = jsonDecode(response.body);
         bool isAuthenticated = data['isAuthenticated'];
+        String getToken = data['token'];
 
-        if (isAuthenticated) {
+        if (isAuthenticated && getToken.isNotEmpty) {
+          bool Authenticated = true;
+          String username = data['username'];
           SharedPreferences prefs = await SharedPreferences.getInstance();
           prefs.setString('userType', 'parent');
           prefs.setString('username', username);
+          prefs.setString('getToken', getToken);
+          prefs.setBool('Authenticated', Authenticated);
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => ParentHomePage(username: username), // Pass the username to ParentHomePage
+              builder: (context) => ParentHomePage(
+                  username: username), // Pass the username to ParentHomePage
             ),
           );
         } else if (response.statusCode == 401) {
@@ -169,7 +180,7 @@ class _ParentLoginPageState extends State<ParentLoginPage> {
                     const SizedBox(width: 20.0),
                     Expanded(
                       child: TextFormField(
-                        controller: _usernameController,
+                        controller: _emailController,
                         decoration: const InputDecoration(
                           labelText: 'Username',
                           fillColor: Colors.white,

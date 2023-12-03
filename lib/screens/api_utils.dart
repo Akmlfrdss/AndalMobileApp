@@ -112,6 +112,33 @@ class ApiUtils {
       );
     }
   }
+    static Future<void> SaveNotificationToDatabase({
+    required String childName,
+    required BuildContext Context,
+    required String Notifusername,
+    required String Notifstatus,
+    }) async {
+    final url = Uri.parse(
+        'https://childtrackr-backend-production.up.railway.app/notif/data');
+    Map<String, String> headers = {'Content-Type': 'application/json'};
+    http.Response response = await http.post(
+      url,
+      headers: headers,
+      body: jsonEncode({
+        'username': Notifusername,
+        'status': Notifstatus,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+
+    } else if (response.statusCode == 400) {
+      print(response.statusCode);
+
+    } else {
+
+    }
+  }
 
   static Future<void> SaveGeofenceHistoryToDatabase({
     required String childName,

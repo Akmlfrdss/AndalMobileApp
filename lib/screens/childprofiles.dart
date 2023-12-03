@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 class ChildProfile {
   final String username;
   final String name;
-  final double latitude;
-  final double longitude;
+  final String latitude;
+  final String longitude;
 
   ChildProfile({
     required this.username,

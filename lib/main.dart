@@ -4,6 +4,7 @@ import 'package:tracking_loc2/screens/child_login.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tracking_loc2/screens/parentshome.dart';
 import 'package:tracking_loc2/screens/childhome.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
 
 void main() async {
   WidgetsFlutterBinding
@@ -12,6 +13,18 @@ void main() async {
   String? userType = prefs.getString('userType');
   String? username = prefs.getString('username');
   String? childUsername = prefs.getString('childUsername');
+  String token = prefs.getString('getToken').toString();
+  bool? isAuthenticated = prefs.getBool('Authenticated');
+  AwesomeNotifications().initialize(
+    null,
+    [
+      NotificationChannel(
+          channelKey: 'basic_channel',
+          channelName: 'Basic Notifications',
+          channelDescription: 'notification for basic tests'),
+    ],
+    debug: true,
+  );
 
   runApp(
     MaterialApp(
@@ -19,12 +32,14 @@ void main() async {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: userType == 'parent'
+      home: userType == 'parent' && token.isNotEmpty && isAuthenticated == true
           ? ParentHomePage(
-              username: username ?? '') // Ganti dengan halaman orang tua yang sesuai
+              username:
+                  username ?? '') // Ganti dengan halaman orang tua yang sesuai
           : userType == 'child'
               ? ChildHomePage(
-                  username: childUsername ?? '') // Ganti dengan halaman anak yang sesuai
+                  username: childUsername ??
+                      '') // Ganti dengan halaman anak yang sesuai
               : const LandingPage(),
     ),
   );

@@ -4,6 +4,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:tracking_loc2/screens/childhistory.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'parentnotifhistory.dart';
 
 
 class HistoryPage extends StatefulWidget {
@@ -113,34 +114,69 @@ class _HistoryPageState extends State<HistoryPage> {
         titleTextStyle: const TextStyle(fontFamily: 'LatoFont', fontSize: 25),
         backgroundColor: const Color(0xFF5863F8),
       ),
-      body: Container(
-        child: ListView.builder(
-          itemCount: childHistorys.length,
-          itemBuilder: (context, index) {
-            // Tampilkan informasi history di sini
-          final history = childHistorys[index];
-          String dateString = history.date; // Assuming date is in string format
-          
-          // Konversi waktu ke GMT+7
-          String gmt7Time = convertToGMT7(dateString);
-            return ListTile(
-              title: Text('${history.childName}',
-              style: TextStyle(
-                fontSize: 18.0,
-               fontWeight: FontWeight.w600),
+      body: Stack(
+        children: [
+            ListView.builder(
+            itemCount: childHistorys.length,
+            itemBuilder: (context, index) {
+              // Tampilkan informasi history di sini
+            final history = childHistorys[index];
+            String dateString = history.date; // Assuming date is in string format
+            
+            // Konversi waktu ke GMT+7
+            String gmt7Time = convertToGMT7(dateString);
+              return ListTile(
+                title: Text('${history.childName}',
+                style: TextStyle(
+                  fontSize: 18.0,
+                fontWeight: FontWeight.w600),
+                ),
+                subtitle:   Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                  Text('Alamat: ${history.address}'),
+                  Text('Jam: ${history.startTime} - ${history.endTime}'),
+                  ],
+                ),
+                trailing: Text('$gmt7Time'),
+                contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+              );
+            },
+          ),
+          Expanded(
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => historyNotifPage(username: widget.username),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF5863F8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15.0),
+                    ),
+                    shadowColor: const Color.fromARGB(255, 0, 0, 0).withOpacity(1),
+                    elevation: 6,
+                  ),
+                  child: const Text(
+                    'History Status Lokasi Anak',
+                    style: TextStyle(
+                      color: Color.fromARGB(255, 255, 255, 255),
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
               ),
-              subtitle:   Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                Text('Alamat: ${history.address}'),
-                Text('Jam: ${history.startTime} - ${history.endTime}'),
-                ],
-              ),
-              trailing: Text('$gmt7Time'),
-              contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-            );
-          },
-        ),
+            ),
+          ),
+        ]
       ),
     );
   }
