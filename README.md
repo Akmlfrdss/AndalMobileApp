@@ -1,6 +1,6 @@
-# tracking_loc2
+# AndalApp_ChildTrackingLoc
 
-A new Flutter project.
+A new Flutter project originally written by Abdillah Akmal Firdaus
 
 ## Getting Started
 
