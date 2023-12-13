@@ -99,7 +99,7 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
       }
     });
     //notif delay selama 10 detik
-    _delayednotification = Timer.periodic(Duration(seconds: 10), (timer) {
+    _delayednotification = Timer.periodic(Duration(seconds: 4), (timer) {
         if (notificationDisplayed == null ||
             notificationDisplayed == false ||
             notificationDisplayed == true) {
@@ -148,8 +148,6 @@ class _ChildLocationMapPageState extends State<ChildLocationMapPage> {
 
   void triggerNotification() async {
     // Menunda eksekusi fungsi selama 10 detikR
-    await Future.delayed(Duration(seconds: 10));
-
     if (notificationDisplayed == true) {
       AwesomeNotifications().createNotification(
           content: NotificationContent(

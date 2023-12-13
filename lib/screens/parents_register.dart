@@ -26,7 +26,7 @@ class _RegisterPageState extends State<ParentRegisterPage> {
         'https://childtrackr-backend-production.up.railway.app/user/register');
     Map<String, String> headers = {'Content-Type': 'application/json'};
     String body =
-        '{"username": "$username", "password": "$password"},"email"; "$email"';
+        '{"username": "$username", "password": "$password","email": "$email"}';
 
     try {
       http.Response response =
@@ -76,7 +76,7 @@ class _RegisterPageState extends State<ParentRegisterPage> {
             );
           },
         );
-      } else {
+      } if (response.statusCode == 400) {
         // ignore: use_build_context_synchronously
         showDialog(
           context: context,

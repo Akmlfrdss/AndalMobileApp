@@ -342,7 +342,7 @@ class _ParentHomePageState extends State<ParentHomePage> {
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
-                  height: 370,
+                  height: 320,
                   width: 500,
                   decoration: BoxDecoration(
                     color: Color.fromARGB(
@@ -453,8 +453,8 @@ class _ParentHomePageState extends State<ParentHomePage> {
           responseData['longitude'] != null) {
         return {
           'childUsername': responseData['username'],
-          'latitude': responseData['latitude'],
-          'longitude': responseData['longitude'],
+          'latitude': responseData['latitude'].toString(),
+          'longitude': responseData['longitude'].toString(),
         };
       } else {
         throw Exception('Data koordinat tidak ditemukan.');
